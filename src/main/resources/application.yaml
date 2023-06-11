@@ -1,0 +1,21 @@
+spring:
+  sql:
+    init:
+      platform: postgresql
+      mode: always
+    output:
+      ansi:
+        enabled: always
+  datasource:
+    url: jdbc:postgresql://dumbo.db.elephantsql.com:5432/ncirnkdb
+    username: ncirnkdb
+    password: WGHAuCtjPn9IoE4aR85rlQGSsLITocvj
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 5
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+
