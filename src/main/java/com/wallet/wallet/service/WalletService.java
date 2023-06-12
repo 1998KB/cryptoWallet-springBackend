@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 public class WalletService {
     private final String BITCOIN_ADDRESS_REGEX = "^(1|3|bc)[a-zA-Z0-9]{25,34}$";
     private final Pattern BITCOIN_ADDRESS_PATTERN = Pattern.compile(BITCOIN_ADDRESS_REGEX);
-    private final String API_URL = "http://api.coinlayer.com/live?access_key=f936e0e58e554f6234394497213fae2c";
+    private final String API_URL = "http://api.coinlayer.com/live?access_key=44828e0798ae4579226045c37093d39d";
 
     WalletRepository walletRepo;
 

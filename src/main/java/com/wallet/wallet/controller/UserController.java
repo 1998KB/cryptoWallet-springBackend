@@ -1,14 +1,18 @@
 package com.wallet.wallet.controller;
+
 import com.wallet.wallet.model.UserObj;
 import com.wallet.wallet.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.userdetails.User;
+
+import java.security.Principal;
 
 
 @RestController
@@ -42,18 +46,27 @@ public class UserController {
     }
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<UserObj> getUserById(@PathVariable Long id) {
-        if (userService.getUserById(id)!= null) {
-            return new ResponseEntity<>(userService.getUserById(id), HttpStatus.OK);
-        } else {
+    public ResponseEntity<UserObj> getUserById(@PathVariable Long id, Principal principal) {
+        UserObj user = userService.getUserById(id);
+        if (user == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        if (!isAuthorized(user.getUsername(), principal)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
+
     @DeleteMapping("/user/{id}")
-    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
+    public ResponseEntity<String> deleteUserById(@PathVariable Long id, Principal principal) {
+        UserObj user = userService.getUserById(id);
         try {
+            if (!isAuthorized(user.getUsername(), principal)) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
             userService.deleteUserById(id);
+            inMemoryUserDetailsManager.deleteUser(user.getUsername());
             return ResponseEntity.ok("User deleted successfully");
         } catch (Exception e) {
             return new ResponseEntity<>("This user do not exist", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -61,13 +74,28 @@ public class UserController {
     }
 
     @PatchMapping("/user/{id}")
-    public ResponseEntity<UserObj> updateUser(@PathVariable Long id, @RequestBody UserObj updatedUser) {
+    public ResponseEntity<UserObj> updateUser(@PathVariable Long id, @RequestBody UserObj updatedUser, Principal principal) {
+        System.out.println("patch user: " + userService.getUserById(id).getUsername() + "principal: " + principal.getName());
         try {
+            if (!isAuthorized(userService.getUserById(id).getUsername(), principal)) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+            UserDetails userDetails = inMemoryUserDetailsManager.loadUserByUsername(userService.getUserById(id).getUsername());
             UserObj user = userService.updateUser(id, updatedUser);
+            userDetails = User.withUserDetails(userDetails)
+                    .username(user.getUsername())
+                    .password(passwordEncoder.encode(user.getPassword()))
+                    .build();
+            inMemoryUserDetailsManager.deleteUser(userDetails.getUsername());
+            inMemoryUserDetailsManager.createUser(userDetails);
             return ResponseEntity.ok(user);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    private boolean isAuthorized(String username, Principal principal) {
+        return username.equals(principal.getName()) || principal.getName().equals("admin");
     }
 
 }

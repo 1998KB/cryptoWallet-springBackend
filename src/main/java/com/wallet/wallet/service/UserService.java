@@ -42,7 +42,9 @@ public class UserService {
 
     public UserObj getUserById(Long id) {
         UserObj userObj = userRepo.findById(id).orElse(null);
-        userObj.getUserWallet().setBitcoinValue(walletService.getBitcoinValue());
+        if (userObj != null) {
+            userObj.getUserWallet().setBitcoinValue(walletService.getBitcoinValue());
+        }
         return userObj;
     }
 
