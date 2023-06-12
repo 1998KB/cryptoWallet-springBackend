@@ -30,7 +30,7 @@ public class SecurityConfigurationBasicAuth {
         UserDetails admin = User.builder()
                 .username("admin")
                 .password(encoder().encode("Admin2000!"))
-                .roles("USER")
+                .roles("ADMIN")
                 .build();
         userDetailsManager.createUser(admin);
         return userDetailsManager;
@@ -42,7 +42,7 @@ public class SecurityConfigurationBasicAuth {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/newUser").permitAll()
-                        .requestMatchers("/user/**").hasRole("USER")
+                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());
